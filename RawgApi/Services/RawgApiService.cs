@@ -12,7 +12,7 @@ namespace RawgApi.Services
     {
         private readonly HttpClient httpClient;
         // Onde ficara o nosso acesso da API Publica que RAWG
-        private readonly string _apiKey = "meu API Key";
+        private readonly string _apiKey = "\"https://api-rawg.runasp.net/api/Jogos\"";
 
         public RawgApiService()
         {
