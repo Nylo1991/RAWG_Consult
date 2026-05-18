@@ -107,7 +107,7 @@
                         Width="170"
                         Margin="5"/>
 
-                <Button Content="☁ Enviar API (Nikolas) "
+                <Button Content="☁ Enviar Nikolas"
                         Command="{Binding EnviarApiCommand}"
                         FontSize="15"
                         FontWeight="Bold"
