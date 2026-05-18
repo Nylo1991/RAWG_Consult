@@ -13,10 +13,17 @@ namespace RawgApi.Services
     /// </summary>
     public class RawgApiService
     {
+        // ==========================================
+        // 1. CAMPOS PRIVADOS
+        // ==========================================
+
+        // Cliente HTTP utilizado para realizar as requisições para a API RAWG.
         private readonly HttpClient httpClient;
 
+        // Chave da API RAWG carregada por variável de ambiente.
+        // Isso evita expor a chave diretamente no código e no GitHub.
         private readonly string _apiKey =
-            "53dad1fcdc4540d2a983ce2451f45b68";
+            Environment.GetEnvironmentVariable("RAWG_API_KEY") ?? string.Empty;
 
         /// <summary>
         /// Inicializa uma nova instância do serviço da API RAWG.
@@ -51,6 +58,12 @@ namespace RawgApi.Services
         {
             try
             {
+                // Verifica se a chave da API foi configurada corretamente.
+                if (string.IsNullOrWhiteSpace(_apiKey))
+                {
+                    throw new Exception("Chave da API RAWG não configurada. Configure a variável de ambiente RAWG_API_KEY.");
+                }
+
                 // Monta a URL da requisição utilizando a chave da API e o termo de busca.
                 string url =
                     $"https://api.rawg.io/api/games?key={_apiKey}" +
