@@ -24,7 +24,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0"
-                       Text="📂 MEU BANCO DE DADOS LOCAL"
+                       Text="📂 Banco de Jogos Local"
                        FontSize="30"
                        FontWeight="Bold"
                        Foreground="White"
@@ -107,7 +107,7 @@
                         Width="170"
                         Margin="5"/>
 
-                <Button Content="☁ Enviar API"
+                <Button Content="☁ Enviar API (Nikolas) "
                         Command="{Binding EnviarApiCommand}"
                         FontSize="15"
                         FontWeight="Bold"

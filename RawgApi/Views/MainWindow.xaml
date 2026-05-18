@@ -24,7 +24,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0"
-                       Text="🎮 RAWG GAME EXPLORER"
+                       Text="🎮 Biblioteca de Jogos"
                        FontSize="32"
                        FontWeight="Bold"
                        Foreground="White"
