@@ -1,6 +1,6 @@
 # RAWG_Consult
 
-# 🎮 RAWG Game Explorer
+# 🎮 Biblioteca de Jogos
 
 ## 📌 Sobre o Projeto
 
