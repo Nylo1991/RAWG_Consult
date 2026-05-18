@@ -165,6 +165,18 @@ namespace RawgApi.ViewModels
                 // Chama o serviço responsável por consultar a API RAWG.
                 var resultados = await _rawgApiService.BuscarJogosAsync(TermPesquisa);
 
+                // ==========================================
+                // CONTROLE DE RESULTADO VAZIO
+                // ==========================================
+
+                if (resultados == null || resultados.Count == 0)
+                {
+                    ListaGames.Clear();
+                    SelectedGame = null;
+                    StatusMessage = "Nenhum jogo encontrado para o termo pesquisado.";
+                    return;
+                }
+
                 // Limpa os resultados anteriores da tabela.
                 ListaGames.Clear();
 
@@ -257,6 +269,11 @@ namespace RawgApi.ViewModels
             {
                 // Trata erros específicos do Entity Framework ao salvar no banco.
                 StatusMessage = "Erro ao salvar no SQLite: " + ObterErroCompleto(ex);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Trata erros relacionados à operação inválida no contexto do banco.
+                StatusMessage = "Erro de operação ao salvar: " + ObterErroCompleto(ex);
             }
             catch (Exception ex)
             {

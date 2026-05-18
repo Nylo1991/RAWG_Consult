@@ -108,8 +108,20 @@ namespace RawgApi.ViewModels
             // Cria o serviço responsável pelo envio para a API externa.
             _aluno2ApiService = new Aluno2ApiService();
 
-            // Garante que o banco local exista.
-            _dbContext.Database.EnsureCreated();
+            try
+            {
+                // Garante que o banco local exista.
+                _dbContext.Database.EnsureCreated();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Erro ao iniciar banco SQLite:\n\n" + ex.Message,
+                    "Erro SQLite",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
 
             // Inicializa a lista que será exibida no DataGrid.
             JogosSalvos = new ObservableCollection<Games>();
@@ -163,7 +175,17 @@ namespace RawgApi.ViewModels
                 // Remove qualquer seleção anterior.
                 JogoSelecionado = null;
 
+                if (jogos.Count == 0)
+                {
+                    StatusMessage = "Nenhum jogo salvo no banco local.";
+                    return;
+                }
+
                 StatusMessage = $"Banco local carregado: {jogos.Count} jogo(s) salvo(s).";
+            }
+            catch (DbUpdateException ex)
+            {
+                StatusMessage = "Erro ao acessar o banco local: " + ObterErroCompleto(ex);
             }
             catch (Exception ex)
             {
@@ -184,6 +206,12 @@ namespace RawgApi.ViewModels
                 if (JogoSelecionado == null)
                 {
                     StatusMessage = "Selecione um jogo para atualizar.";
+                    return;
+                }
+
+                if (JogoSelecionado.Id <= 0)
+                {
+                    StatusMessage = "Jogo inválido para atualizar.";
                     return;
                 }
 
@@ -215,6 +243,10 @@ namespace RawgApi.ViewModels
 
                 StatusMessage = "Jogo atualizado com sucesso.";
             }
+            catch (DbUpdateException ex)
+            {
+                StatusMessage = "Erro ao atualizar no banco local: " + ObterErroCompleto(ex);
+            }
             catch (Exception ex)
             {
                 StatusMessage = "Erro ao atualizar: " + ObterErroCompleto(ex);
@@ -234,6 +266,12 @@ namespace RawgApi.ViewModels
                 if (JogoSelecionado == null)
                 {
                     StatusMessage = "Selecione um jogo para excluir.";
+                    return;
+                }
+
+                if (JogoSelecionado.Id <= 0)
+                {
+                    StatusMessage = "Jogo inválido para excluir.";
                     return;
                 }
 
@@ -265,6 +303,10 @@ namespace RawgApi.ViewModels
                 JogoSelecionado = null;
 
                 StatusMessage = "Jogo excluído do banco local com sucesso.";
+            }
+            catch (DbUpdateException ex)
+            {
+                StatusMessage = "Erro ao excluir do banco local: " + ObterErroCompleto(ex);
             }
             catch (Exception ex)
             {
@@ -323,6 +365,10 @@ namespace RawgApi.ViewModels
 
                 StatusMessage = $"{selecionados.Count} jogo(s) excluído(s) do banco local.";
             }
+            catch (DbUpdateException ex)
+            {
+                StatusMessage = "Erro ao excluir jogos marcados do banco: " + ObterErroCompleto(ex);
+            }
             catch (Exception ex)
             {
                 StatusMessage = "Erro ao excluir marcados: " + ObterErroCompleto(ex);
@@ -336,6 +382,12 @@ namespace RawgApi.ViewModels
         // Alterna entre marcar todos os jogos e desmarcar todos.
         private void AlternarSelecaoTodos()
         {
+            if (JogosSalvos == null || !JogosSalvos.Any())
+            {
+                StatusMessage = "Nenhum jogo carregado para selecionar.";
+                return;
+            }
+
             // Inverte o estado atual da seleção.
             _todosSelecionados = !_todosSelecionados;
 
@@ -384,6 +436,12 @@ namespace RawgApi.ViewModels
 
                 foreach (var jogo in selecionados)
                 {
+                    if (jogo == null || jogo.Id <= 0)
+                    {
+                        falhas++;
+                        continue;
+                    }
+
                     // Normaliza os dados antes do envio.
                     NormalizarJogo(jogo);
 

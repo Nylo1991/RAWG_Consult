@@ -36,6 +36,10 @@ namespace RawgApi.Services
 
             httpClient = new HttpClient();
 
+            // Define um tempo máximo para a API responder.
+            // Isso evita que o programa fique travado caso a API demore ou não responda.
+            httpClient.Timeout = TimeSpan.FromSeconds(15);
+
             // RAWG exige User-Agent
             httpClient.DefaultRequestHeaders.Add(
                 "User-Agent",
@@ -58,11 +62,25 @@ namespace RawgApi.Services
         {
             try
             {
+                // ==========================================
+                // 2. VALIDAÇÕES INICIAIS
+                // ==========================================
+
+                // Verifica se o usuário digitou algum termo para pesquisar.
+                if (string.IsNullOrWhiteSpace(termoBusca))
+                {
+                    throw new Exception("O termo de busca não pode estar vazio.");
+                }
+
                 // Verifica se a chave da API foi configurada corretamente.
                 if (string.IsNullOrWhiteSpace(_apiKey))
                 {
                     throw new Exception("Chave da API RAWG não configurada. Configure a variável de ambiente RAWG_API_KEY.");
                 }
+
+                // ==========================================
+                // 3. MONTAGEM DA URL E REQUISIÇÃO
+                // ==========================================
 
                 // Monta a URL da requisição utilizando a chave da API e o termo de busca.
                 string url =
@@ -80,8 +98,41 @@ namespace RawgApi.Services
                 // DEBUG
                 Console.WriteLine(jsonResponse);
 
-                // Garante que a resposta da API foi bem-sucedida.
-                response.EnsureSuccessStatusCode();
+                // ==========================================
+                // 4. CONTROLE DE ERROS DA RESPOSTA HTTP
+                // ==========================================
+
+                // Verifica se a API retornou algum erro.
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        throw new Exception("Chave da API RAWG inválida ou não autorizada.");
+                    }
+
+                    if (response.StatusCode == HttpStatusCode.Forbidden)
+                    {
+                        throw new Exception("Acesso negado pela API RAWG. Verifique a chave utilizada.");
+                    }
+
+                    if (response.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        throw new Exception("Endpoint da API RAWG não encontrado.");
+                    }
+
+                    if ((int)response.StatusCode == 429)
+                    {
+                        throw new Exception("Limite de requisições da API RAWG atingido. Tente novamente mais tarde.");
+                    }
+
+                    throw new Exception(
+                        $"Erro na API RAWG. Status: {(int)response.StatusCode} - {response.ReasonPhrase}"
+                    );
+                }
+
+                // ==========================================
+                // 5. LEITURA E VALIDAÇÃO DO JSON
+                // ==========================================
 
                 // Converte a resposta JSON em um documento manipulável.
                 using JsonDocument doc =
@@ -90,22 +141,36 @@ namespace RawgApi.Services
                 JsonElement root = doc.RootElement;
 
                 // Obtém a propriedade "results", onde ficam os jogos retornados pela API.
-                JsonElement results =
-                    root.GetProperty("results");
+                // Caso ela não exista, significa que a resposta veio em um formato inesperado.
+                if (!root.TryGetProperty("results", out JsonElement results))
+                {
+                    throw new Exception("A resposta da API RAWG não contém a lista de resultados.");
+                }
 
                 List<Games> jogosEncontrados =
                     new List<Games>();
 
+                // ==========================================
+                // 6. CONVERSÃO DOS RESULTADOS PARA A MODEL
+                // ==========================================
+
                 // Percorre os jogos retornados e converte cada item para o modelo Games.
                 foreach (JsonElement jogo in results.EnumerateArray())
                 {
+                    // Evita erro caso algum item venha sem ID.
+                    if (!jogo.TryGetProperty("id", out JsonElement idElement))
+                    {
+                        continue;
+                    }
+
                     jogosEncontrados.Add(new Games
                     {
-                        Id = jogo.GetProperty("id").GetInt32(),
+                        Id = idElement.GetInt32(),
 
                         Nome =
                             jogo.TryGetProperty("name",
-                            out JsonElement nome)
+                            out JsonElement nome) &&
+                            nome.ValueKind != JsonValueKind.Null
                             ? nome.GetString()
                             : "",
 
@@ -117,13 +182,15 @@ namespace RawgApi.Services
 
                         Avaliacao =
                             jogo.TryGetProperty("rating",
-                            out JsonElement rating)
+                            out JsonElement rating) &&
+                            rating.ValueKind != JsonValueKind.Null
                             ? rating.ToString()
                             : "0",
 
                         Classificacao =
                             jogo.TryGetProperty("metacritic",
-                            out JsonElement meta)
+                            out JsonElement meta) &&
+                            meta.ValueKind != JsonValueKind.Null
                             ? meta.ToString()
                             : "0",
 
@@ -132,6 +199,21 @@ namespace RawgApi.Services
                 }
 
                 return jogosEncontrados;
+            }
+            catch (HttpRequestException)
+            {
+                // Erro de conexão, internet, DNS ou falha na comunicação HTTP.
+                throw new Exception("Erro de conexão ao acessar a API RAWG. Verifique sua internet.");
+            }
+            catch (TaskCanceledException)
+            {
+                // Erro de tempo limite da requisição.
+                throw new Exception("Tempo limite excedido ao consultar a API RAWG. Tente novamente.");
+            }
+            catch (JsonException)
+            {
+                // Erro ao interpretar o JSON retornado pela API.
+                throw new Exception("Erro ao processar os dados retornados pela API RAWG.");
             }
             catch (Exception ex)
             {
