@@ -1,23 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace RawgApi.Models
 {
     public class Games
     {
-        public string Id { get; set; }
-        public string Nome { get; set; }
-        public string Descrição { get; set; }
-        public string ImagemUrl { get; set; }
+        public int Id { get; set; }
 
-        public string Avaliacao { get; set; } 
+        public string Nome { get; set; } = string.Empty;
 
-        public string Classificação { get; set; }
+        public string Descricao { get; set; } = string.Empty;
 
-        public DateTime Upload { get; set; } 
+        public string ImagemUrl { get; set; } = string.Empty;
 
+        public string Avaliacao { get; set; } = "0";
+
+        public string Classificacao { get; set; } = "0";
+
+        public DateTime Upload { get; set; } = DateTime.Now;
+
+        [NotMapped]
+        [JsonIgnore]
+        public bool IsSelected { get; set; }
+
+        [NotMapped]
+        [JsonIgnore]
+        public int DisplayId { get; set; }
     }
 }

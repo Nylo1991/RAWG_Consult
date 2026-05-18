@@ -1,52 +1,93 @@
-﻿using System;
+﻿using RawgApi.Models;
+using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using RawgApi.Models;
-
 
 namespace RawgApi.Services
 {
-     public class RawgApiService
+    public class RawgApiService
     {
         private readonly HttpClient httpClient;
-        // Onde ficara o nosso acesso da API Publica que RAWG
-        private readonly string _apiKey = "\"https://api-rawg.runasp.net/api/Jogos\"";
+
+        private readonly string _apiKey =
+            "53dad1fcdc4540d2a983ce2451f45b68";
 
         public RawgApiService()
         {
+            ServicePointManager.SecurityProtocol =
+                SecurityProtocolType.Tls12;
+
             httpClient = new HttpClient();
+
+            // RAWG exige User-Agent
+            httpClient.DefaultRequestHeaders.Add(
+                "User-Agent",
+                "RawgWpfApp");
         }
 
         public async Task<List<Games>> BuscarJogosAsync(string termoBusca)
         {
             try
             {
-                // Exemplo de endpoint para obter jogos populares
-                string url = $"https://api.rawg.io/api/games?key={_apiKey}&search={termoBusca}";
-                HttpResponseMessage response = await httpClient.GetAsync(url);
+                string url =
+                    $"https://api.rawg.io/api/games?key={_apiKey}" +
+                    $"&search={Uri.EscapeDataString(termoBusca)}";
+
+                HttpResponseMessage response =
+                    await httpClient.GetAsync(url);
+
+                string jsonResponse =
+                    await response.Content.ReadAsStringAsync();
+
+                // DEBUG
+                Console.WriteLine(jsonResponse);
+
                 response.EnsureSuccessStatusCode();
-                string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                // NOTA: A API da RAWG retorna os jogos dentro de uma propriedade chamada "results".
-                // Para simplificar a sua SA, estamos criando um objeto dinâmico aqui para extrair apenas o básico.
-                // Em um cenário real, você criaria uma classe RawgResponse.
-                using JsonDocument doc = JsonDocument.Parse(jsonResponse);
+                using JsonDocument doc =
+                    JsonDocument.Parse(jsonResponse);
+
                 JsonElement root = doc.RootElement;
-                JsonElement results = root.GetProperty("results");
 
-                List<Games> jogosEncontrados = new List<Games>();
+                JsonElement results =
+                    root.GetProperty("results");
 
-                foreach (JsonElement jogo  in results.EnumerateArray()) 
-                    {
+                List<Games> jogosEncontrados =
+                    new List<Games>();
+
+                foreach (JsonElement jogo in results.EnumerateArray())
+                {
                     jogosEncontrados.Add(new Games
                     {
-                        Id = jogo.GetProperty("id").ToString(),
-                        Nome = jogo.GetProperty("Name").GetString(),
-                        // A imagem e outros dados podem vir nulos dependendo do jogo, é bom tratar
-                        ImagemUrl = jogo.TryGetProperty("background_image", out JsonElement img) ? img.GetString() : null,
-                        Avaliacao = jogo.TryGetProperty("rating", out JsonElement rating) ? rating.ToString() : "0",
+                        Id = jogo.GetProperty("id").GetInt32(),
+
+                        Nome =
+                            jogo.TryGetProperty("name",
+                            out JsonElement nome)
+                            ? nome.GetString()
+                            : "",
+
+                        ImagemUrl =
+    jogo.TryGetProperty("background_image", out JsonElement img) &&
+    img.ValueKind != JsonValueKind.Null
+        ? img.GetString() ?? string.Empty
+        : string.Empty,
+
+                        Avaliacao =
+                            jogo.TryGetProperty("rating",
+                            out JsonElement rating)
+                            ? rating.ToString()
+                            : "0",
+
+                        Classificacao =
+                            jogo.TryGetProperty("metacritic",
+                            out JsonElement meta)
+                            ? meta.ToString()
+                            : "0",
+
                         Upload = DateTime.Now
                     });
                 }
@@ -55,7 +96,8 @@ namespace RawgApi.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"Erro ao buscar na RAWG: {ex.Message}");
+                throw new Exception(
+                    $"Erro ao buscar na RAWG: {ex.Message}");
             }
         }
     }

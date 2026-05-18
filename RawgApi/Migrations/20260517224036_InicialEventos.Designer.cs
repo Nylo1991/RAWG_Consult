@@ -11,7 +11,7 @@ using RawgApi.Data;
 namespace RawgApi.Migrations
 {
     [DbContext(typeof(LocalDbContex))]
-    [Migration("20260515233716_InicialEventos")]
+    [Migration("20260517224036_InicialEventos")]
     partial class InicialEventos
     {
         /// <inheritdoc />
@@ -22,18 +22,19 @@ namespace RawgApi.Migrations
 
             modelBuilder.Entity("RawgApi.Models.Games", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Avaliacao")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Classificação")
+                    b.Property<string>("Classificacao")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Descrição")
+                    b.Property<string>("Descricao")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -50,7 +51,7 @@ namespace RawgApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Games");
+                    b.ToTable("Games", (string)null);
                 });
 #pragma warning restore 612, 618
         }

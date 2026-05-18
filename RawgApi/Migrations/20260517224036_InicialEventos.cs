@@ -15,12 +15,13 @@ namespace RawgApi.Migrations
                 name: "Games",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     Nome = table.Column<string>(type: "TEXT", nullable: false),
-                    Descrição = table.Column<string>(type: "TEXT", nullable: false),
+                    Descricao = table.Column<string>(type: "TEXT", nullable: false),
                     ImagemUrl = table.Column<string>(type: "TEXT", nullable: false),
                     Avaliacao = table.Column<string>(type: "TEXT", nullable: false),
-                    Classificação = table.Column<string>(type: "TEXT", nullable: false),
+                    Classificacao = table.Column<string>(type: "TEXT", nullable: false),
                     Upload = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
